@@ -30,6 +30,7 @@ precios([Pieza | Piezas], [Precio | Precios]):-
 color(codo( Color ), Color).
 color(canio( Color , _ ), Color).
 color(canilla( _ , Color , _ ), Color).
+color(extremo( _ , Color ), Color).
 
 coloresEnchufables(rojo, negro).
 coloresEnchufables(azul, rojo).
@@ -38,7 +39,10 @@ coloresEnchufables(Color, Color).
 puedoEnchufar(Pieza1, Pieza2):- 
     color(Pieza1, Color1),
     color(Pieza2, Color2),
+    Pieza1 \= extremo(derecho, _ ),
+    Pieza2 \= extremo(izquierdo, _ ),
     coloresEnchufables(Color1, Color2).
+
 %3 Modificamos puedoEnchufar/2 para que se banque cañerías
 puedoEnchufar(Canieria1, CanieriaOPieza):- 
     last(Canieria1, Pieza1),
@@ -47,8 +51,21 @@ puedoEnchufar(Canieria1, CanieriaOPieza):-
 puedoEnchufar(CanieriaOPieza, [Pieza2 | _ ]):- 
     puedoEnchufar(CanieriaOPieza, Pieza2).
 
-
-
+/*
+Definir un predicado canieriaBienArmada/1, que nos indique si una cañería está bien armada o no. 
+Una cañería está bien armada si a cada elemento lo puedo enchufar al inmediato siguiente, de acuerdo 
+a lo indicado al definir el predicado puedoEnchufar/2.
+*/
+canieriaBienArmada([ _ ]).
+canieriaBienArmada([PiezaOCanieria1, PiezaOCanieria2 | Canieria]):-
+    puedoEnchufar(PiezaOCanieria1, PiezaOCanieria2),
+    canieriaBienArmada([PiezaOCanieria2 | Canieria]).
+/*
+Alternativa a la segunda cláusula
+canieriaBienArmada([Pieza1 | Canieria]):-
+    puedoEnchufar(Pieza1, Canieria),
+    canieriaBienArmada(Canieria).
+*/
 
 :- begin_tests(puedoEnchufarPiezas).
 test(piezas_del_mismo_color_son_enchufables, nondet):-
@@ -68,4 +85,17 @@ test(canieria_izq_roja_con_canieria_der_negra, nondet):-
         [canio(negro, 5), canilla(redonda, blanco, 5)]
     ).
 :- end_tests(puedoEnchufarCanierias).
+
+:- begin_tests(canieriaBienArmada).
+test(canieria_bien_armada, nondet):-
+    canieriaBienArmada([canilla(redonda, rojo, 5), codo(rojo)]).
+test(canieria_mal_armada, fail):-
+    canieriaBienArmada([canilla(redonda, blanco, 5), codo(rojo)]).
+test(canieria_bien_armada_con_extremo, nondet):-
+    canieriaBienArmada([extremo(izquierdo, rojo), codo(rojo)]).
+test(canieria_mal_armada_con_extremo, fail):-
+    canieriaBienArmada([extremo(derecho, rojo), codo(rojo)]).
+test(metacanieria, nondet):-
+    canieriaBienArmada([codo(azul), [codo(rojo), codo(negro)], codo(negro)]).
+:- end_tests(canieriaBienArmada).
 
